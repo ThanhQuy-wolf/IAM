@@ -9,7 +9,7 @@
 
 ### Repository & Structure
 - [ ] Tạo GitHub repo, invite thành viên, set branch protection trên `main`
-- [ ] Khởi tạo monorepo structure:
+- [x] Khởi tạo monorepo structure:
   ```
   midterm-topic1/
   ├── client/          ← React + Vite
@@ -17,7 +17,7 @@
   ├── README.md
   └── .env.example
   ```
-- [ ] Viết `.env.example` với các biến:
+- [x] Viết `.env.example` với các biến:
   ```
   PORT=5000
   CLIENT_URL=http://localhost:5173
@@ -31,19 +31,19 @@
   GOOGLE_CALLBACK_URL=http://localhost:5000/api/oauth/google/callback
   SESSION_SECRET=
   ```
-- [ ] Setup `.gitignore` (node_modules, .env, dist, uploads/)
+- [x] Setup `.gitignore` (node_modules, .env, dist, uploads/)
 
 ### Frontend — React + Vite
-- [ ] `npm create vite@latest client -- --template react`
-- [ ] Cài dependencies:
+- [x] `npm create vite@latest client -- --template react`
+- [x] Cài dependencies:
   ```bash
   npm install axios react-router-dom react-hook-form
   npm install @simplewebauthn/browser
   npm install react-hot-toast
   ```
-- [ ] Cài dev dependencies: `tailwindcss`, `postcss`, `autoprefixer`
-- [ ] Setup TailwindCSS (`npx tailwindcss init -p`)
-- [ ] Tạo cấu trúc thư mục:
+- [x] Cài dev dependencies: `tailwindcss`, `postcss`, `autoprefixer` (Tailwind v4 + @tailwindcss/vite)
+- [x] Setup TailwindCSS (v4: plugin trong vite.config.js + @import "tailwindcss" trong index.css)
+- [x] Tạo cấu trúc thư mục:
   ```
   client/src/
   ├── components/
@@ -68,8 +68,8 @@
   ```
 
 ### Backend — Node.js + Express
-- [ ] `npm init -y` trong thư mục `server/`
-- [ ] Cài dependencies:
+- [x] `npm init -y` trong thư mục `server/`
+- [x] Cài dependencies:
   ```bash
   npm install express cors dotenv cookie-parser helmet express-rate-limit
   npm install mongoose uuid
@@ -79,8 +79,8 @@
   npm install speakeasy qrcode
   npm install @simplewebauthn/server
   ```
-- [ ] Cài dev dependencies: `nodemon`
-- [ ] Tạo cấu trúc thư mục:
+- [x] Cài dev dependencies: `nodemon`
+- [x] Tạo cấu trúc thư mục:
   ```
   server/
   ├── config/
@@ -340,13 +340,13 @@
 - [ ] Audio rõ, caption phụ đề tiếng Anh nếu được
 
 ### Submission Checklist
-- [ ] `README.md` ở root có đầy đủ:
-  - [ ] Mô tả project và các tính năng IAM
-  - [ ] Prerequisites (Node.js >= 18, MongoDB, npm)
-  - [ ] Step-by-step setup instructions (cả client và server)
-  - [ ] `.env` template (các biến cần điền, hướng dẫn lấy Google OAuth credentials)
-  - [ ] Lệnh chạy: `cd server && npm run dev` / `cd client && npm run dev`
-  - [ ] Test credentials (tài khoản admin sẵn có để chấm điểm)
+- [x] `README.md` ở root có đầy đủ:
+  - [x] Mô tả project và các tính năng IAM
+  - [x] Prerequisites (Node.js >= 18, MongoDB, npm)
+  - [x] Step-by-step setup instructions (cả client và server)
+  - [x] `.env` template (các biến cần điền, hướng dẫn lấy Google OAuth credentials)
+  - [x] Lệnh chạy: `cd server && npm run dev` / `cd client && npm run dev`
+  - [ ] Test credentials (tài khoản admin sẵn có để chấm điểm) ← seed DB ở D5–D6
 - [ ] GitHub repo public (hoặc add giảng viên làm collaborator)
 - [ ] Code có comment giải thích ở các đoạn quan trọng (Argon2 config, JWT rotation, WebAuthn verify)
 - [ ] Không commit `.env` thật lên GitHub
