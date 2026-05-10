@@ -112,12 +112,12 @@
 > Mục tiêu: Đăng ký / đăng nhập bằng email+password, hash Argon2, cấp JWT access + refresh token
 
 ### Backend — User Model & Hashing
-- [ ] Trong `models/User.js`, định nghĩa Mongoose schema:
+- [x] Trong `models/User.js`, định nghĩa Mongoose schema:
   - Các trường: `email`, `passwordHash`, `username`, `role` (`user`|`admin`|`moderator`), `isTwoFAEnabled`, `twoFASecret`, `webauthnCredentials[]`, `createdAt`
   - `role` mặc định là `user`
-- [ ] Trong `models/RefreshToken.js`:
+- [x] Trong `models/RefreshToken.js`:
   - Các trường: `token` (string, indexed), `userId` (ref User), `expiresAt`, `isRevoked`
-- [ ] Trong `services/hashService.js`:
+- [x] Trong `services/hashService.js`:
   - Hàm `hashPassword(plain)` dùng `argon2.hash()` với config: `type: argon2id`, `memoryCost: 2**16`, `timeCost: 3`
   - Hàm `verifyPassword(plain, hash)` dùng `argon2.verify()`
 - [ ] Trong `config/db.js`: kết nối Mongoose với `MONGO_URI`
@@ -153,7 +153,7 @@
 - [ ] Áp dụng `helmet()` và `express-rate-limit` (tối đa 20 req/phút cho auth routes)
 
 ### Frontend — Auth Context & Forms
-- [ ] Tạo `AuthContext.jsx`:
+- [x] Tạo `AuthContext.jsx`:
   - State: `user` (object | null), `loading`
   - Hàm `login(email, password)` → gọi `POST /api/auth/login`, lưu `accessToken` vào memory (không localStorage)
   - Hàm `logout()` → gọi `POST /api/auth/logout`, xoá state

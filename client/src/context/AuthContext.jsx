@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -48,6 +48,10 @@ export function AuthProvider({ children }) {
     } catch {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
+  }, []);
+
+  useEffect(() => {
+    restoreSession();
   }, []);
 
   return (

@@ -57,6 +57,7 @@ api.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       window.__accessToken = null;
+      // TODO (D4): dispatch auth:logout event so AuthContext clears user state
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

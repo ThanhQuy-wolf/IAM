@@ -31,7 +31,7 @@ A full-featured authentication system implementing modern IAM patterns: OAuth 2.
 
 ```bash
 git clone <repo-url>
-cd midterm-topic1
+cd Midterm
 ```
 
 ### 2. Configure environment variables
