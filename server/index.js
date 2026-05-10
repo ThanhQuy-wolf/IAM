@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const connectDB = require('./config/db');
+const passport = require('./config/passport');
 
 const app = express();
 
@@ -14,6 +15,7 @@ connectDB();
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
+app.use(passport.initialize());
 app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET,
