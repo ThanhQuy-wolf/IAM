@@ -14,15 +14,19 @@ const authenticate = require('../middleware/authenticate');
 router.post('/register', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+  if (password.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters' });
+
+  const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    if (await User.findOne({ email })) {
+    if (await User.findOne({ email: normalizedEmail })) {
       return res.status(409).json({ message: 'Email already in use' });
     }
     const passwordHash = await hash(password);
-    const user = await User.create({ email, passwordHash });
+    const user = await User.create({ email: normalizedEmail, passwordHash });
     res.status(201).json({ message: 'Registered', userId: user._id });
-  } catch {
+  } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ message: 'Email already in use' });
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -32,8 +36,10 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
 
+  const normalizedEmail = email.toLowerCase().trim();
+
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user || !user.passwordHash) return res.status(401).json({ message: 'Invalid credentials' });
 
     const valid = await verify(user.passwordHash, password);
