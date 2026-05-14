@@ -55,7 +55,8 @@ export function AuthProvider({ children }) {
       const me = await api.get('/auth/me');
       dispatch({ type: 'SET_USER', payload: me.data });
     } catch {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      window.__accessToken = null;
+      dispatch({ type: 'LOGOUT' });
     }
   }, []);
 

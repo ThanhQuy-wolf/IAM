@@ -1,13 +1,21 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import OTPInput, { EMPTY_OTP } from '../components/OTPInput';
 
 export default function LoginPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
   const { user, isLoading, login } = useAuth();
   const navigate = useNavigate();
+
+  const [pendingTwoFA, setPendingTwoFA] = useState(null); // { tempToken }
+  const [otp, setOtp] = useState(EMPTY_OTP);
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [backupCode, setBackupCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   if (isLoading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
@@ -16,8 +24,7 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', data);
       if (res.data.requiresTwoFA) {
-        // TODO D9: navigate to /twofa/verify with tempToken
-        toast.error('2FA verification not yet implemented');
+        setPendingTwoFA({ tempToken: res.data.tempToken });
         return;
       }
       login(res.data.user, res.data.accessToken);
@@ -26,6 +33,76 @@ export default function LoginPage() {
       toast.error(err.response?.data?.message || 'Login failed');
     }
   };
+
+  const handleTwoFAVerify = async () => {
+    setVerifying(true);
+    try {
+      const payload = useBackupCode
+        ? { tempToken: pendingTwoFA.tempToken, backupCode }
+        : { tempToken: pendingTwoFA.tempToken, token: otp.join('') };
+
+      const res = await api.post('/twofa/login-verify', payload);
+      login(res.data.user, res.data.accessToken);
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Verification failed');
+      setOtp([...EMPTY_OTP]);
+      setBackupCode('');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const otpFilled = otp.every((d) => d !== '');
+  const canSubmitTwoFA = useBackupCode ? backupCode.trim().length > 0 : otpFilled;
+
+  if (pendingTwoFA) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-full max-w-sm bg-white rounded-lg shadow p-8">
+          <h1 className="text-2xl font-bold mb-1 text-center">Two-Factor Auth</h1>
+          <p className="text-sm text-gray-500 text-center mb-6">
+            {useBackupCode ? 'Enter a backup code' : 'Enter the 6-digit code from your authenticator app'}
+          </p>
+
+          {useBackupCode ? (
+            <input
+              type="text"
+              value={backupCode}
+              onChange={(e) => setBackupCode(e.target.value.trim())}
+              placeholder="Backup code"
+              className="w-full border rounded px-3 py-2 text-sm font-mono text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          ) : (
+            <OTPInput value={otp} onChange={setOtp} />
+          )}
+
+          <button
+            onClick={handleTwoFAVerify}
+            disabled={!canSubmitTwoFA || verifying}
+            className="mt-5 w-full bg-blue-600 text-white rounded py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {verifying ? 'Verifying…' : 'Verify'}
+          </button>
+
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <button
+              onClick={() => { setUseBackupCode((v) => !v); setOtp([...EMPTY_OTP]); setBackupCode(''); }}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              {useBackupCode ? 'Use authenticator app instead' : 'Use backup code instead'}
+            </button>
+            <button
+              onClick={() => setPendingTwoFA(null)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              ← Back to login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

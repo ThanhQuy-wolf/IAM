@@ -7,6 +7,7 @@ const {
   generateRefreshToken,
   setRefreshCookie,
   rotateRefreshToken,
+  generateTempToken,
 } = require('../services/tokenService');
 const authenticate = require('../middleware/authenticate');
 
@@ -46,8 +47,8 @@ router.post('/login', async (req, res) => {
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
     if (user.isTwoFAEnabled) {
-      // Full tempToken flow implemented in D9
-      return res.status(200).json({ requiresTwoFA: true });
+      const tempToken = generateTempToken(user._id);
+      return res.status(200).json({ requiresTwoFA: true, tempToken });
     }
 
     const accessToken = generateAccessToken(user);

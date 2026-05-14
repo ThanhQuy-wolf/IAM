@@ -7,6 +7,7 @@ const authenticate = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    if (decoded.type === '2fa-pending') return res.status(401).json({ message: 'Invalid token' });
 
     // Verify user still exists (handles deleted accounts within token lifetime)
     const exists = await User.exists({ _id: decoded.sub });

@@ -33,4 +33,22 @@ async function rotateRefreshToken(oldToken) {
   return { newToken, userId: existing.userId };
 }
 
-module.exports = { generateAccessToken, generateRefreshToken, setRefreshCookie, rotateRefreshToken };
+function generateTempToken(userId) {
+  return jwt.sign(
+    { sub: userId.toString(), type: '2fa-pending' },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: '5m' }
+  );
+}
+
+function verifyTempToken(token) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    if (decoded.type !== '2fa-pending') return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { generateAccessToken, generateRefreshToken, setRefreshCookie, rotateRefreshToken, generateTempToken, verifyTempToken };
