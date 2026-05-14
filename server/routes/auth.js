@@ -1,18 +1,106 @@
 const router = require('express').Router();
+const User = require('../models/User');
+const RefreshToken = require('../models/RefreshToken');
+const { hash, verify } = require('../services/hashService');
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  setRefreshCookie,
+  rotateRefreshToken,
+} = require('../services/tokenService');
+const authenticate = require('../middleware/authenticate');
 
 // POST /api/auth/register
-router.post('/register', (req, res) => res.json({ message: 'TODO' }));
+router.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+
+  try {
+    if (await User.findOne({ email })) {
+      return res.status(409).json({ message: 'Email already in use' });
+    }
+    const passwordHash = await hash(password);
+    const user = await User.create({ email, passwordHash });
+    res.status(201).json({ message: 'Registered', userId: user._id });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // POST /api/auth/login
-router.post('/login', (req, res) => res.json({ message: 'TODO' }));
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user || !user.passwordHash) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const valid = await verify(user.passwordHash, password);
+    if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+
+    if (user.isTwoFAEnabled) {
+      // Full tempToken flow implemented in D9
+      return res.status(200).json({ requiresTwoFA: true });
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = await generateRefreshToken(user._id);
+    setRefreshCookie(res, refreshToken);
+
+    res.json({
+      accessToken,
+      user: { id: user._id, email: user.email, role: user.role },
+    });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // POST /api/auth/refresh
-router.post('/refresh', (req, res) => res.json({ message: 'TODO' }));
+router.post('/refresh', async (req, res) => {
+  const oldToken = req.cookies?.refreshToken;
+  if (!oldToken) return res.status(401).json({ message: 'No refresh token' });
+
+  try {
+    const result = await rotateRefreshToken(oldToken);
+    if (!result) return res.status(401).json({ message: 'Invalid or expired refresh token' });
+
+    const { newToken, userId } = result;
+    const user = await User.findById(userId).select('_id role email');
+    if (!user) return res.status(401).json({ message: 'User not found' });
+
+    const accessToken = generateAccessToken(user);
+    setRefreshCookie(res, newToken);
+    res.json({ accessToken });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // POST /api/auth/logout
-router.post('/logout', (req, res) => res.json({ message: 'TODO' }));
+router.post('/logout', async (req, res) => {
+  const token = req.cookies?.refreshToken;
+  if (token) {
+    await RefreshToken.deleteOne({ token }).catch(() => {});
+  }
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  res.json({ message: 'Logged out' });
+});
 
 // GET /api/auth/me
-router.get('/me', (req, res) => res.json({ message: 'TODO' }));
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-passwordHash -twoFASecret -backupCodes');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router;

@@ -29,7 +29,8 @@ function setRefreshCookie(res, token) {
 async function rotateRefreshToken(oldToken) {
   const existing = await RefreshToken.findOneAndDelete({ token: oldToken });
   if (!existing || existing.expiresAt < new Date()) return null;
-  return generateRefreshToken(existing.userId);
+  const newToken = await generateRefreshToken(existing.userId);
+  return { newToken, userId: existing.userId };
 }
 
 module.exports = { generateAccessToken, generateRefreshToken, setRefreshCookie, rotateRefreshToken };

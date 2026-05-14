@@ -52,6 +52,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     restoreSession();
+  }, [restoreSession]);
+
+  useEffect(() => {
+    const handler = () => {
+      window.__accessToken = null;
+      dispatch({ type: 'LOGOUT' });
+    };
+    window.addEventListener('auth:logout', handler);
+    return () => window.removeEventListener('auth:logout', handler);
   }, []);
 
   return (
