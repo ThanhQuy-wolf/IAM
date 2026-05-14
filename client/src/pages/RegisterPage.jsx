@@ -1,11 +1,16 @@
 import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
+import { Navigate, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
 export default function RegisterPage() {
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (isLoading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   const onSubmit = async (data) => {
     try {

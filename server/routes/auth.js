@@ -48,10 +48,13 @@ router.post('/login', async (req, res) => {
     const refreshToken = await generateRefreshToken(user._id);
     setRefreshCookie(res, refreshToken);
 
-    res.json({
-      accessToken,
-      user: { id: user._id, email: user.email, role: user.role },
-    });
+    const userObj = user.toObject();
+    delete userObj.passwordHash;
+    delete userObj.twoFASecret;
+    delete userObj.backupCodes;
+    delete userObj.__v;
+
+    res.json({ accessToken, user: userObj });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }
@@ -95,7 +98,7 @@ router.post('/logout', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', authenticate, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-passwordHash -twoFASecret -backupCodes');
+    const user = await User.findById(req.user.id).select('-passwordHash -twoFASecret -backupCodes -__v');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch {

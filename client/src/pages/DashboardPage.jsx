@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +23,16 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-2xl mx-auto p-6 space-y-4">
+        {user?.role === 'admin' && (
+          <Link
+            to="/admin"
+            className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-5 py-3 text-sm text-blue-700 hover:bg-blue-100 transition-colors"
+          >
+            <span className="font-medium">Admin Panel</span>
+            <span>→</span>
+          </Link>
+        )}
+
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-base font-semibold mb-3">Profile</h2>
           <dl className="space-y-1 text-sm text-gray-600">
