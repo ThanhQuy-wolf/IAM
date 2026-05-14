@@ -65,7 +65,9 @@ export default function DashboardPage() {
               </span>
             </li>
           </ul>
-          <p className="mt-3 text-xs text-gray-400">Security settings available in D8–D10</p>
+          <Link to="/profile" className="mt-3 inline-block text-xs text-blue-600 hover:text-blue-800 transition-colors">
+            Manage security settings →
+          </Link>
         </div>
       </main>
     </div>

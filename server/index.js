@@ -21,7 +21,7 @@ const authLimiter = rateLimit({ windowMs: 60 * 1000, max: 20 });
 
 app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/oauth', require('./routes/oauth'));
-app.use('/api/twofa', require('./routes/twofa'));
+app.use('/api/twofa', authLimiter, require('./routes/twofa'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/webauthn', require('./routes/webauthn'));
 

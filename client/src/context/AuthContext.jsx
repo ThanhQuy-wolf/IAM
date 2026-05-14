@@ -38,6 +38,15 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      dispatch({ type: 'SET_USER', payload: data });
+    } catch {
+      // ignore — user stays logged in, stale data is acceptable
+    }
+  }, []);
+
   // Call once on app mount to restore session via refresh token cookie
   const restoreSession = useCallback(async () => {
     try {
@@ -64,7 +73,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, restoreSession }}>
+    <AuthContext.Provider value={{ ...state, login, logout, restoreSession, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
