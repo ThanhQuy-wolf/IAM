@@ -43,7 +43,7 @@ export default function OAuthCallbackPage() {
   }, [login, navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
       <div className="flex flex-col items-center gap-5">
         <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/25">
           <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">

@@ -30,7 +30,7 @@ function FingerprintIcon({ className }) {
 }
 
 const brandHeader = (icon, title, subtitle) => (
-  <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-8 pt-8 pb-7 text-center">
+  <div className="bg-linear-to-br from-blue-600 to-indigo-700 px-8 pt-8 pb-7 text-center">
     <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl mb-3 shadow-inner">
       {icon}
     </div>
@@ -114,7 +114,7 @@ export default function LoginPage() {
 
   if (pendingTwoFA) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 px-4">
         <div className="w-full max-w-sm">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
             {brandHeader(
@@ -169,7 +169,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-blue-50 dark:from-gray-950 dark:to-gray-900 px-4">
       <div className="w-full max-w-sm">
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
           {brandHeader(
@@ -221,7 +221,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 mb-4 space-y-2">
                 <a
                   href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:5000'}/api/oauth/google`}
                   className="flex w-full items-center justify-center gap-2.5 border border-gray-200 dark:border-gray-700 rounded-lg py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -247,7 +247,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">
               No account?{' '}
               <Link to="/register" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Register</Link>
             </p>

@@ -114,7 +114,7 @@ export default function DashboardPage() {
         {user?.role === 'admin' && (
           <Link
             to="/admin"
-            className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl px-5 py-4 group shadow-sm hover:shadow-md transition-shadow"
+            className="flex items-center justify-between bg-linear-to-r from-blue-600 to-indigo-700 rounded-xl px-5 py-4 group shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-3 text-left">
               <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">

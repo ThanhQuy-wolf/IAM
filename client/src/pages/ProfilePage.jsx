@@ -220,7 +220,7 @@ export default function ProfilePage() {
                       className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3 border border-gray-100 dark:border-gray-700"
                     >
                       <div className="min-w-0 text-left">
-                        <p className="text-xs font-mono text-gray-600 dark:text-gray-300 truncate max-w-[160px]">
+                        <p className="text-xs font-mono text-gray-600 dark:text-gray-300 truncate max-w-40">
                           {cred.id.slice(0, 20)}…
                         </p>
                         {cred.transports?.length > 0 && (

@@ -100,7 +100,7 @@ export default function AdminPage() {
           <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Admin</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline truncate max-w-[180px]">{user?.email}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline truncate max-w-45">{user?.email}</span>
           <button
             onClick={async () => { await logout(); toast.success('Logged out'); }}
             className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 border border-gray-200 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800 rounded-lg px-3 py-1.5 transition-colors"
