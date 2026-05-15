@@ -1,3 +1,9 @@
+// HTTPS for WebAuthn (required for non-localhost origins):
+// 1. brew install mkcert && mkcert -install (macOS) OR choco install mkcert (Windows)
+// 2. mkcert localhost  →  generates localhost.pem + localhost-key.pem
+// 3. Replace app.listen() below with https.createServer({ key, cert }, app).listen()
+// 4. Set CLIENT_URL=https://localhost:5173 and update vite.config.js server.https
+// Note: http://localhost works in most browsers without mkcert during development.
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');

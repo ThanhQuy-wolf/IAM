@@ -2,16 +2,19 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { startAuthentication } from '@simplewebauthn/browser';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import OTPInput, { EMPTY_OTP } from '../components/OTPInput';
 
 export default function LoginPage() {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
   const { user, isLoading, login } = useAuth();
   const navigate = useNavigate();
+  const emailValue = watch('email');
 
   const [pendingTwoFA, setPendingTwoFA] = useState(null); // { tempToken }
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [otp, setOtp] = useState(EMPTY_OTP);
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState('');
@@ -50,6 +53,28 @@ export default function LoginPage() {
       setBackupCode('');
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    const email = emailValue?.trim();
+    if (!email) { toast.error('Enter your email first'); return; }
+    setPasskeyLoading(true);
+    try {
+      const { data } = await api.post('/webauthn/login/start', { email });
+      const { userId, ...options } = data;
+      const assertion = await startAuthentication({ optionsJSON: options });
+      const res = await api.post('/webauthn/login/finish', { userId, ...assertion });
+      login(res.data.user, res.data.accessToken);
+      navigate('/dashboard');
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        toast.error('Authentication cancelled');
+      } else {
+        toast.error(err.response?.data?.message || 'Passkey login failed');
+      }
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -160,6 +185,19 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </a>
+          <button
+            type="button"
+            onClick={handlePasskeyLogin}
+            disabled={passkeyLoading || isSubmitting}
+            className="mt-2 flex w-full items-center justify-center gap-2 border rounded py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z" />
+              <path d="M17 11V8a5 5 0 0 0-10 0v3" />
+              <rect x="5" y="11" width="14" height="10" rx="2" />
+            </svg>
+            {passkeyLoading ? 'Verifying…' : 'Sign in with Passkey'}
+          </button>
         </div>
 
         <p className="mt-4 text-center text-xs text-gray-500">

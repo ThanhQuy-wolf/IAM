@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { startRegistration } from '@simplewebauthn/browser';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import TwoFASetupModal from '../components/TwoFASetupModal';
@@ -9,6 +10,17 @@ export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [disabling, setDisabling] = useState(false);
+
+  const [credentials, setCredentials] = useState([]);
+  const [loadingCreds, setLoadingCreds] = useState(true);
+  const [addingPasskey, setAddingPasskey] = useState(false);
+
+  useEffect(() => {
+    api.get('/webauthn/credentials')
+      .then((res) => setCredentials(res.data))
+      .catch(() => setCredentials([]))
+      .finally(() => setLoadingCreds(false));
+  }, []);
 
   const handleDisable = async () => {
     if (!window.confirm('Disable 2FA? Your account will be less secure.')) return;
@@ -21,6 +33,37 @@ export default function ProfilePage() {
       toast.error(err.response?.data?.message || 'Failed to disable 2FA');
     } finally {
       setDisabling(false);
+    }
+  };
+
+  const handleAddPasskey = async () => {
+    setAddingPasskey(true);
+    try {
+      const { data: options } = await api.post('/webauthn/register/start');
+      const credential = await startRegistration({ optionsJSON: options });
+      await api.post('/webauthn/register/finish', credential);
+      toast.success('Passkey registered');
+      const { data } = await api.get('/webauthn/credentials');
+      setCredentials(data);
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        toast.error('Registration cancelled');
+      } else {
+        toast.error(err.response?.data?.message || 'Registration failed');
+      }
+    } finally {
+      setAddingPasskey(false);
+    }
+  };
+
+  const handleRemovePasskey = async (credentialId) => {
+    if (!window.confirm('Remove this passkey?')) return;
+    try {
+      await api.delete(`/webauthn/credentials/${credentialId}`);
+      setCredentials((prev) => prev.filter((c) => c.id !== credentialId));
+      toast.success('Passkey removed');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to remove passkey');
     }
   };
 
@@ -81,15 +124,52 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t pt-4">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Passkey / Biometric</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {user?.webauthnCredentials?.length
-                  ? `${user.webauthnCredentials.length} key(s) registered`
-                  : 'Available in D10'}
-              </p>
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Passkey / Biometric</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {loadingCreds
+                    ? 'Loading…'
+                    : credentials.length === 0
+                      ? 'No passkeys registered — add one to enable passwordless login'
+                      : `${credentials.length} passkey${credentials.length > 1 ? 's' : ''} registered`}
+                </p>
+              </div>
+              <button
+                onClick={handleAddPasskey}
+                disabled={addingPasskey}
+                className="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 rounded px-3 py-1.5 transition-colors disabled:opacity-50"
+              >
+                {addingPasskey ? 'Registering…' : 'Add Passkey'}
+              </button>
             </div>
+
+            {credentials.length > 0 && (
+              <ul className="space-y-2">
+                {credentials.map((cred) => (
+                  <li
+                    key={cred.id}
+                    className="flex items-center justify-between bg-gray-50 rounded px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-xs font-mono text-gray-500 truncate max-w-[200px]">
+                        {cred.id.slice(0, 20)}…
+                      </p>
+                      {cred.transports?.length > 0 && (
+                        <p className="text-xs text-gray-400">{cred.transports.join(', ')}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleRemovePasskey(cred.id)}
+                      className="text-xs text-red-500 hover:text-red-700 transition-colors ml-2"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
