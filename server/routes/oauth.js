@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const passport = require('../config/passport');
+const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken, setRefreshCookie } = require('../services/tokenService');
 
 router.get('/google', passport.authenticate('google', {
@@ -12,6 +13,7 @@ router.get('/google/callback',
   async (req, res) => {
     try {
       const user = req.user;
+      await User.findByIdAndUpdate(user._id, { $set: { lastLoginAt: new Date() } });
       const accessToken = generateAccessToken(user);
       const refreshToken = await generateRefreshToken(user._id);
       setRefreshCookie(res, refreshToken);

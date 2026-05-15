@@ -51,6 +51,9 @@ router.post('/login', async (req, res) => {
       return res.status(200).json({ requiresTwoFA: true, tempToken });
     }
 
+    user.lastLoginAt = new Date();
+    await User.findByIdAndUpdate(user._id, { $set: { lastLoginAt: user.lastLoginAt } });
+
     const accessToken = generateAccessToken(user);
     const refreshToken = await generateRefreshToken(user._id);
     setRefreshCookie(res, refreshToken);
@@ -73,6 +76,8 @@ router.post('/refresh', async (req, res) => {
   if (!oldToken) return res.status(401).json({ message: 'No refresh token' });
 
   try {
+    // rotateRefreshToken atomically deletes the old token before creating the new one,
+    // so a stolen refresh token can only be used once — replay is detected on the second use.
     const result = await rotateRefreshToken(oldToken);
     if (!result) return res.status(401).json({ message: 'Invalid or expired refresh token' });
 

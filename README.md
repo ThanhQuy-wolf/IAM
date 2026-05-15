@@ -11,7 +11,7 @@ A full-featured authentication system implementing modern IAM patterns: OAuth 2.
 - **JWT** — Short-lived access token (in-memory) + long-lived refresh token (httpOnly cookie) with rotation
 - **Google OAuth 2.0** — Authorization Code Flow via Passport.js; auto-links existing accounts by email
 - **2FA TOTP** — QR code setup with Google Authenticator / Authy (RFC 6238), backup codes
-- **WebAuthn / Passkey** — Biometric login (D10, in progress)
+- **WebAuthn / Passkey** — Biometric/hardware key login via SimpleWebAuthn; register and manage passkeys from Profile
 - **RBAC** — `user` / `admin` roles; admin panel for user management and stats
 
 ---
@@ -199,10 +199,12 @@ Rate limit: `authLimiter` = 20 req / 60s on `/api/auth` and `/api/twofa`.
 | `GET` | `/api/admin/stats` | `authenticate` + `authorize('admin')` | — | `{ total, admins, twoFAEnabled, oauthUsers }` |
 | `PATCH` | `/api/admin/users/:id/role` | `authenticate` + `authorize('admin')` | `{ role }` | Updated user |
 | `DELETE` | `/api/admin/users/:id` | `authenticate` + `authorize('admin')` | — | `{ message }` |
-| `POST` | `/api/webauthn/register/start` | — | — | TODO (D10) |
-| `POST` | `/api/webauthn/register/finish` | — | — | TODO (D10) |
-| `POST` | `/api/webauthn/login/start` | — | — | TODO (D10) |
-| `POST` | `/api/webauthn/login/finish` | — | — | TODO (D10) |
+| `GET` | `/api/webauthn/credentials` | `authenticate` | — | `[{ id, transports, createdAt }]` |
+| `POST` | `/api/webauthn/register/start` | `authenticate` | — | WebAuthn registration options |
+| `POST` | `/api/webauthn/register/finish` | `authenticate` | Credential attestation object | `{ message }` |
+| `POST` | `/api/webauthn/login/start` | None | `{ email }` | WebAuthn authentication options + `userId` |
+| `POST` | `/api/webauthn/login/finish` | None | `{ userId, ...assertion }` | `{ accessToken, user }` |
+| `DELETE` | `/api/webauthn/credentials/:id` | `authenticate` | — | `{ message }` |
 
 ---
 
@@ -220,6 +222,7 @@ Rate limit: `authLimiter` = 20 req / 60s on `/api/auth` and `/api/twofa`.
 | `twoFASecret` | String | Base32 speakeasy secret. **Never returned by any API** |
 | `backupCodes` | [String] | Array of 10 argon2id-hashed codes. Consumed on use |
 | `webauthnCredentials` | [Object] | Array of `{ credentialID, credentialPublicKey, counter, transports }` |
+| `lastLoginAt` | Date | Timestamp of most recent successful login (password, OAuth, 2FA, or passkey). `null` until first login after D12 |
 | `createdAt` / `updatedAt` | Date | Mongoose timestamps |
 
 ### RefreshToken (`server/models/RefreshToken.js`)
@@ -291,7 +294,8 @@ Midterm/
 │           ├── DashboardPage.jsx
 │           ├── ProfilePage.jsx ← 2FA enable/disable UI
 │           ├── AdminPage.jsx
-│           └── OAuthCallbackPage.jsx
+│           ├── OAuthCallbackPage.jsx
+│           └── ProfilePage.jsx         ← 2FA enable/disable + passkey management
 ├── server/
 │   ├── config/
 │   │   ├── db.js               ← mongoose.connect
@@ -315,7 +319,8 @@ Midterm/
 │       ├── hashService.js
 │       ├── tokenService.js
 │       ├── totpService.js
-│       └── twoFAService.js
+│       ├── twoFAService.js
+│       └── webauthnService.js          ← SimpleWebAuthn v13 wrapper, in-memory challenge store
 ├── .env.example
 ├── CLAUDE.md
 ├── PROJECT_PLAN.md

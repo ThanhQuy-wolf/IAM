@@ -113,11 +113,17 @@ export default function ProfilePage() {
                   {user?.role}
                 </span>
               </div>
-              <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Joined</span>
                   <span className="text-gray-700 dark:text-gray-300">
                     {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Last login</span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {user?.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : '—'}
                   </span>
                 </div>
               </div>

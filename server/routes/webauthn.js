@@ -109,6 +109,7 @@ router.post('/login/finish', async (req, res) => {
 
     // Update counter to prevent replay attacks
     credential.counter = result.authenticationInfo.newCounter;
+    user.lastLoginAt = new Date();
     await user.save();
 
     const accessToken = generateAccessToken(user);

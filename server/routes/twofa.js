@@ -30,15 +30,18 @@ router.post('/login-verify', async (req, res) => {
     const user = await User.findById(decoded.sub);
     if (!user || !user.isTwoFAEnabled) return res.status(401).json({ message: 'Invalid session' });
 
+    const now = new Date();
     if (token) {
       const valid = verifyToken(user.twoFASecret, token);
       if (!valid) return res.status(401).json({ message: 'Invalid token' });
+      await User.findByIdAndUpdate(user._id, { $set: { lastLoginAt: now } });
     } else {
       const idx = await verifyBackupCode(backupCode, user.backupCodes);
       if (idx === -1) return res.status(401).json({ message: 'Invalid backup code' });
       const newCodes = user.backupCodes.filter((_, i) => i !== idx);
-      await User.findByIdAndUpdate(user._id, { $set: { backupCodes: newCodes } });
+      await User.findByIdAndUpdate(user._id, { $set: { backupCodes: newCodes, lastLoginAt: now } });
     }
+    user.lastLoginAt = now;
 
     const accessToken = generateAccessToken(user);
     const refreshToken = await generateRefreshToken(user._id);
@@ -94,6 +97,9 @@ router.post('/verify-setup', async (req, res) => {
     if (!valid) return res.status(400).json({ message: 'Invalid token' });
 
     const rawCodes = generateRawCodes(10);
+    // Backup codes are hashed with argon2id — if the DB is breached, an attacker
+    // cannot use the stored hashes directly to bypass 2FA on other services where
+    // users may have reused the same code pattern.
     const hashedCodes = await hashBackupCodes(rawCodes);
 
     user.isTwoFAEnabled = true;

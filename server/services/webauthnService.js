@@ -9,7 +9,9 @@ const RP_NAME = process.env.RP_NAME || 'IAM Midterm';
 const RP_ID = process.env.RP_ID || 'localhost';
 const EXPECTED_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
 
-// In-memory challenge store: userId_string → base64url_challenge
+// Challenges are kept in-memory rather than in the DB because they're short-lived
+// (consumed within one registration/authentication round-trip) and don't need to
+// survive server restarts. A single-process deployment makes this safe.
 const challengeStore = new Map();
 
 async function generateRegOptions(user) {

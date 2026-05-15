@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema({
 
   // WebAuthn
   webauthnCredentials: [webauthnCredentialSchema],
+
+  lastLoginAt: { type: Date, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

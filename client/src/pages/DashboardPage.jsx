@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -36,9 +37,30 @@ function StatusBadge({ active, activeLabel, inactiveLabel }) {
   );
 }
 
+function formatCountdown(seconds) {
+  const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [isDark, toggleDark] = useDarkMode();
+  const [sessionSeconds, setSessionSeconds] = useState(null);
+
+  useEffect(() => {
+    const token = window.__accessToken;
+    if (!token) return;
+    try {
+      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
+      const payload = JSON.parse(atob(padded));
+      const computeRemaining = () => Math.max(0, Math.floor(payload.exp - Date.now() / 1000));
+      setSessionSeconds(computeRemaining());
+      const interval = setInterval(() => setSessionSeconds(computeRemaining()), 1000);
+      return () => clearInterval(interval);
+    } catch { /* invalid token format — don't show countdown */ }
+  }, []);
 
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
 
@@ -63,6 +85,14 @@ export default function DashboardPage() {
           <span className="text-sm text-gray-500 dark:text-gray-400">Dashboard</span>
         </div>
         <div className="flex items-center gap-2">
+          {sessionSeconds !== null && sessionSeconds > 0 && (
+            <span className="text-xs font-mono text-gray-400 dark:text-gray-500 hidden sm:inline tabular-nums">
+              Session {formatCountdown(sessionSeconds)}
+            </span>
+          )}
+          {sessionSeconds !== null && sessionSeconds === 0 && (
+            <span className="text-xs text-red-400 hidden sm:inline">Session expired</span>
+          )}
           <button
             onClick={toggleDark}
             aria-label="Toggle dark mode"
@@ -115,6 +145,11 @@ export default function DashboardPage() {
               <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full capitalize bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
                 {user?.role}
               </span>
+              {user?.lastLoginAt && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  Last login: {new Date(user.lastLoginAt).toLocaleString()}
+                </p>
+              )}
             </div>
           </div>
         </div>
