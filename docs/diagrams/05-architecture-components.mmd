@@ -1,0 +1,37 @@
+flowchart TB
+    subgraph Client["React + Vite (client/src)"]
+        AC[AuthContext + axios interceptor]
+        RP[ProtectedRoute]
+        Pages[Login / Register / Dashboard / Profile / Admin / OAuthCallback]
+    end
+
+    subgraph Server["Node.js + Express (server/)"]
+        direction TB
+        MW[Middleware: helmet, cors, rate-limit,<br/>authenticate, authorize, errorHandler]
+        subgraph Routes
+            RA[auth.js]
+            RO[oauth.js]
+            RT[twofa.js]
+            RW[webauthn.js]
+            RAd[admin.js]
+        end
+        subgraph Services
+            SH[hashService<br/>Argon2 + bcrypt fallback]
+            ST[tokenService<br/>JWT + rotation]
+            STo[totpService<br/>speakeasy]
+            STw[twoFAService<br/>backup codes]
+            SW[webauthnService<br/>@simplewebauthn]
+        end
+        Passport[config/passport.js<br/>Google strategy]
+    end
+
+    DB[(MongoDB Atlas<br/>User, RefreshToken)]
+    Google[Google OIDC]
+
+    Pages --> AC --> MW
+    RP --> AC
+    MW --> Routes
+    Routes --> Services
+    RO --> Passport --> Google
+    Services --> DB
+    MW --> DB

@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -38,6 +38,15 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      dispatch({ type: 'SET_USER', payload: data });
+    } catch {
+      // ignore — user stays logged in, stale data is acceptable
+    }
+  }, []);
+
   // Call once on app mount to restore session via refresh token cookie
   const restoreSession = useCallback(async () => {
     try {
@@ -46,12 +55,26 @@ export function AuthProvider({ children }) {
       const me = await api.get('/auth/me');
       dispatch({ type: 'SET_USER', payload: me.data });
     } catch {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      window.__accessToken = null;
+      dispatch({ type: 'LOGOUT' });
     }
   }, []);
 
+  useEffect(() => {
+    restoreSession();
+  }, [restoreSession]);
+
+  useEffect(() => {
+    const handler = () => {
+      window.__accessToken = null;
+      dispatch({ type: 'LOGOUT' });
+    };
+    window.addEventListener('auth:logout', handler);
+    return () => window.removeEventListener('auth:logout', handler);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, restoreSession }}>
+    <AuthContext.Provider value={{ ...state, login, logout, restoreSession, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

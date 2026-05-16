@@ -4,7 +4,7 @@ const ARGON2_OPTIONS = {
   type: argon2.argon2id,
   memoryCost: 65536, // 64 MB — OWASP recommended minimum
   timeCost: 3,
-  parallelism: 4,
+  parallelism: 1,
 };
 
 async function hash(password) {

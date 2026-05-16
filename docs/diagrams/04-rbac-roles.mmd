@@ -1,0 +1,6 @@
+flowchart LR
+    U1[User A] --> R1[role: user]
+    U2[User B] --> R2[role: admin]
+    R1 --> P1[Access own profile / dashboard]
+    R2 --> P1
+    R2 --> P2[Admin API: list users, change role, delete]

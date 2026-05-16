@@ -28,7 +28,12 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    if (error.response?.status !== 401 || original._retry) {
+    if (
+      error.response?.status !== 401 ||
+      original._retry ||
+      original.url?.includes('/auth/refresh') ||
+      !original.headers?.Authorization
+    ) {
       return Promise.reject(error);
     }
 
@@ -57,6 +62,7 @@ api.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       window.__accessToken = null;
+      window.dispatchEvent(new Event('auth:logout'));
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

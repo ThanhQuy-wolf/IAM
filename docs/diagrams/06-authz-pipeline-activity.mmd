@@ -1,0 +1,11 @@
+flowchart TD
+    Start([Incoming API request]) --> H[helmet + cors + rate-limit]
+    H --> Auth{authenticate:<br/>valid, non-tempToken JWT?}
+    Auth -- No --> R401[401 Unauthorized]
+    Auth -- Yes --> AttachUser[req.user = {userId, role}]
+    AttachUser --> NeedsAdmin{Route requires<br/>admin?}
+    NeedsAdmin -- No --> Handler[Route handler]
+    NeedsAdmin -- Yes --> Authz{authorize:<br/>role == admin?}
+    Authz -- No --> R403[403 Forbidden]
+    Authz -- Yes --> Handler
+    Handler --> Done([JSON response])
