@@ -15,6 +15,9 @@ const userSchema = new mongoose.Schema({
   // Google OAuth
   googleId: { type: String, sparse: true },
 
+  // GitHub OAuth
+  githubId: { type: String, sparse: true },
+
   // 2FA TOTP
   isTwoFAEnabled: { type: Boolean, default: false },
   twoFASecret: { type: String },

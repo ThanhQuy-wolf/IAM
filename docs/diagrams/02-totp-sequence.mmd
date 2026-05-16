@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant U as User
+    participant BE as Backend (totpService)
+    participant App as Authenticator App
+
+    Note over U,App: Setup
+    U->>BE: POST /api/twofa/setup
+    BE->>BE: speakeasy.generateSecret()
+    BE->>U: QR code (otpauth:// URI)
+    U->>App: Scan QR
+    U->>BE: POST /twofa/verify-setup (6-digit code)
+    BE->>BE: speakeasy.totp.verify(window:1)
+    BE->>BE: isTwoFAEnabled = true; store backup codes (Argon2-hashed)
+
+    Note over U,App: Login with 2FA
+    U->>BE: POST /api/auth/login (email+password OK)
+    BE->>U: tempToken (2FA-pending, NOT a full session)
+    U->>App: Read current 6-digit code
+    U->>BE: POST /twofa/login-verify (tempToken + code)
+    BE->>U: Final access JWT + refresh cookie

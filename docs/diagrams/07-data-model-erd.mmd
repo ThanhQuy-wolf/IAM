@@ -1,0 +1,25 @@
+erDiagram
+    USER ||--o{ REFRESHTOKEN : "issues"
+    USER ||--o{ WEBAUTHN_CREDENTIAL : "embeds"
+    USER {
+        ObjectId _id
+        string email UK
+        string passwordHash "Argon2 (nullable for OAuth-only)"
+        string role "enum user|admin"
+        string googleId "sparse"
+        bool isTwoFAEnabled
+        string twoFASecret
+        string[] backupCodes "Argon2-hashed"
+        date lastLoginAt
+    }
+    WEBAUTHN_CREDENTIAL {
+        Buffer credentialID
+        Buffer credentialPublicKey
+        number counter
+        string[] transports
+    }
+    REFRESHTOKEN {
+        ObjectId userId FK
+        string token
+        date expiresAt
+    }

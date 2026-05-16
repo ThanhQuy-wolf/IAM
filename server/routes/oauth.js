@@ -26,4 +26,27 @@ router.get('/google/callback',
   }
 );
 
+router.get('/github', passport.authenticate('github', {
+  scope: ['user:email'],
+  session: false,
+}));
+
+router.get('/github/callback',
+  passport.authenticate('github', { session: false, failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth` }),
+  async (req, res) => {
+    try {
+      const user = req.user;
+      await User.findByIdAndUpdate(user._id, { $set: { lastLoginAt: new Date() } });
+      const accessToken = generateAccessToken(user);
+      const refreshToken = await generateRefreshToken(user._id);
+      setRefreshCookie(res, refreshToken);
+
+      // Pass access token to client via URL fragment (stays in-memory, not server logs)
+      res.redirect(`${process.env.CLIENT_URL}/oauth/callback#token=${accessToken}`);
+    } catch (err) {
+      res.redirect(`${process.env.CLIENT_URL}/login?error=server`);
+    }
+  }
+);
+
 module.exports = router;

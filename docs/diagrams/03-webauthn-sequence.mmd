@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant B as Browser
+    participant S as Server (webauthnService)
+    participant A as Authenticator
+
+    Note over B,A: Registration
+    B->>S: POST /api/webauthn/register/start
+    S->>B: options + challenge (stored in session)
+    B->>A: navigator.credentials.create()
+    A->>A: user gesture → generate key pair
+    A->>B: attestationObject (public key, counter=0)
+    B->>S: POST /register/finish
+    S->>S: verifyRegistrationResponse() → store {credID, pubKey, counter}
+
+    Note over B,A: Authentication
+    B->>S: POST /login/start
+    S->>B: challenge + allowCredentials
+    B->>A: navigator.credentials.get()
+    A->>A: user gesture → sign(challenge)
+    A->>B: assertion (signature)
+    B->>S: POST /login/finish
+    S->>S: verify signature with stored publicKey
+    S->>S: assert newCounter > storedCounter (clone detection)

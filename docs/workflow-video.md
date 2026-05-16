@@ -11,11 +11,11 @@
 
 | Vấn đề | Thực tế trong codebase | Cách xử lý khi thuyết trình |
 |---|---|---|
-| Đề bài ghi "Google/**GitHub** OAuth" | Code **chỉ có Google OAuth** (`server/config/passport.js` chỉ có `GoogleStrategy`). **Không có GitHub.** | Chọn 1 trong 2: **(A)** Chỉ demo & nói về Google OAuth, giải thích flow GitHub tương tự (an toàn nhất cho video). **(B)** Bổ sung `passport-github2` trước khi quay (tốn thời gian, cần đăng ký GitHub OAuth App). → **Khuyến nghị: phương án A.** |
+| Google **& GitHub** OAuth | Đã có **cả hai**: `server/config/passport.js` có `GoogleStrategy` + `GitHubStrategy`; route `/api/oauth/google` và `/api/oauth/github`; UI có 2 nút. | Demo lần lượt cả hai nút. Cần đăng ký **GitHub OAuth App** và điền `GITHUB_CLIENT_ID/SECRET/CALLBACK_URL` vào `server/.env` (xem Chuẩn bị). |
 | "Biometric authentication" | Đã có **WebAuthn/Passkey** (`server/routes/webauthn.js`, SimpleWebAuthn) — đăng nhập bằng vân tay/Windows Hello. | Đây chính là phần "biometric" — demo trên máy có vân tay hoặc Windows Hello. Nếu máy không hỗ trợ, dùng passkey ảo của Chrome DevTools (xem mục Chuẩn bị). |
 | Password hashing | **Argon2id** (`server/services/hashService.js`), tham số OWASP: 64MB memory, timeCost 3. | Mở file này show trực tiếp khi nói về hashing. |
 
-> Nếu không xử lý GitHub OAuth trước khi quay, **tuyệt đối không click nút GitHub** trên màn hình demo (nếu UI có nút đó) — sẽ lỗi trên camera.
+> GitHub OAuth chỉ chạy khi đã điền đủ biến môi trường `GITHUB_*`. **Kiểm tra đăng nhập GitHub chạy được trước khi quay** — nếu chưa cấu hình kịp, mới quay về phương án chỉ demo Google.
 
 ---
 
@@ -44,7 +44,8 @@ Mở đầu và kết luận: **cả hai cùng xuất hiện/nói**.
 
 **Tài khoản & công cụ:**
 
-- [ ] 1 tài khoản Google thật (để demo Google OAuth) — đã đăng nhập sẵn trên trình duyệt
+- [ ] 1 tài khoản Google thật + 1 tài khoản GitHub thật (để demo OAuth) — đã đăng nhập sẵn trên trình duyệt
+- [ ] **GitHub OAuth App** đã đăng ký (github.com → Settings → Developer settings → OAuth Apps), callback `http://localhost:5000/api/oauth/github/callback`; `GITHUB_CLIENT_ID/SECRET/CALLBACK_URL` đã điền vào `server/.env`
 - [ ] Điện thoại có app **Google Authenticator / Authy** (để demo 2FA), pin đầy, sạc sẵn
 - [ ] Máy quay có **vân tay/Windows Hello** HOẶC bật **Virtual Authenticator** trong Chrome DevTools (`F12` → `⋮` → More tools → WebAuthn → Enable virtual authenticator) để demo Passkey không cần phần cứng
 - [ ] Tài khoản user thường để demo RBAC (đăng ký mới trong lúc demo cũng được)
@@ -75,7 +76,7 @@ Mở đầu và kết luận: **cả hai cùng xuất hiện/nói**.
 ### 🟢 01:00 – 02:45 — Lý thuyết: OAuth 2.0 & JWT (Người A)
 
 - **Ai nói:** Người A.
-- **Lời thoại:** *"OAuth 2.0 là chuẩn uỷ quyền cho phép người dùng đăng nhập bằng tài khoản Google mà không chia sẻ mật khẩu cho ứng dụng của chúng em. Hệ thống dùng luồng Authorization Code: người dùng được chuyển hướng sang Google, Google trả về một mã, server đổi mã đó lấy thông tin người dùng. — JWT, JSON Web Token, là token chứa thông tin định danh đã được ký số. Hệ thống dùng access token ngắn hạn 15 phút lưu trong bộ nhớ, và refresh token dài hạn 7 ngày lưu trong cookie httpOnly, có cơ chế xoay vòng (rotation) chống đánh cắp."*
+- **Lời thoại:** *"OAuth 2.0 là chuẩn uỷ quyền cho phép người dùng đăng nhập bằng tài khoản Google hoặc GitHub mà không chia sẻ mật khẩu cho ứng dụng của chúng em. Hệ thống dùng luồng Authorization Code: người dùng được chuyển hướng sang Google/GitHub, nhà cung cấp trả về một mã, server đổi mã đó lấy thông tin người dùng. — JWT, JSON Web Token, là token chứa thông tin định danh đã được ký số. Hệ thống dùng access token ngắn hạn 15 phút lưu trong bộ nhớ, và refresh token dài hạn 7 ngày lưu trong cookie httpOnly, có cơ chế xoay vòng (rotation) chống đánh cắp."*
 - **Màn hình:** Slide sơ đồ OAuth Authorization Code Flow + slide JWT (access vs refresh token).
 
 ### 🟢 02:45 – 04:30 — Lý thuyết: WebAuthn, RBAC, Argon2 (Người B)
@@ -110,7 +111,7 @@ Mở đầu và kết luận: **cả hai cùng xuất hiện/nói**.
 - **Lời thoại + thao tác:**
   1. **2FA setup:** *"Em bật xác thực 2 lớp."* → Vào Profile → bật 2FA → hiện QR code → quét bằng Google Authenticator trên điện thoại → nhập mã 6 số → nhận **backup codes**. *"Backup code cũng được băm bằng Argon2, không lưu thô."*
   2. **2FA login:** Logout → login lại bằng email/password → hệ thống yêu cầu nhập mã TOTP → nhập mã 6 số từ app → vào được Dashboard. **Kết quả:** đăng nhập 2 lớp thành công.
-  3. **Google OAuth:** Logout → ở trang Login bấm **"Đăng nhập với Google"** → chọn tài khoản Google → tự động chuyển về `/oauth/callback` rồi vào Dashboard. *"Hệ thống tự liên kết tài khoản theo email nếu đã tồn tại."*
+  3. **Google & GitHub OAuth:** Logout → bấm **"Continue with Google"** → chọn tài khoản → về `/oauth/callback` rồi vào Dashboard. Logout lần nữa → bấm **"Continue with GitHub"** → authorize → vào Dashboard. *"Cả hai dùng luồng Authorization Code; hệ thống tự liên kết tài khoản theo email nếu đã tồn tại."*
   4. **Passkey (biometric):** Vào Profile → "Thêm Passkey" → xác thực bằng vân tay/Windows Hello (hoặc Virtual Authenticator) → logout → login bằng passkey. **Kết quả:** đăng nhập không cần mật khẩu.
   5. **RBAC:** *"Tài khoản thường không vào được trang admin."* → Với user thường, vào URL `/admin` → bị chặn (Forbidden / redirect). → Logout, đăng nhập `admin@iam.dev` → vào `/admin` thành công, show danh sách user. → Mở nhanh `server/middleware/authorize.js` giải thích kiểm tra `role`.
 - **Màn hình:** Trình duyệt (Profile, Login, Admin) + điện thoại quay cận cảnh app Authenticator + VS Code (`authorize.js`).
@@ -162,8 +163,8 @@ Khoảng đệm cho thao tác chậm/sự cố nhỏ. **Không vượt 15:00.** 
 - [ ] Tổng thời lượng ≤ 15:00
 - [ ] Cả Người A và Người B đều nói, thời lượng cân đối
 - [ ] Đủ 4 key points: OAuth 2.0, JWT, WebAuthn (biometric), RBAC
-- [ ] Đủ demo: Google OAuth, 2FA Authenticator, Argon2 hashing, (Passkey, RBAC)
+- [ ] Đủ demo: Google OAuth, GitHub OAuth, 2FA Authenticator, Argon2 hashing, (Passkey, RBAC)
 - [ ] Đủ 3 phần: lý thuyết · kiến trúc · demo trực tiếp codebase + app đang chạy
-- [ ] Không click nút GitHub OAuth (nếu chưa implement)
+- [ ] GitHub OAuth đã cấu hình env và test chạy được trước khi quay
 - [ ] Âm thanh rõ, màn hình đọc được chữ (1080p)
 - [ ] Demo chạy thật, không lỗi đỏ trên màn hình

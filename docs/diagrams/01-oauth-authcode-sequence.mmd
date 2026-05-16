@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant U as User
+    participant FE as React Client
+    participant BE as Express Backend
+    participant G as Google (Auth Server)
+
+    U->>FE: Click "Login with Google"
+    FE->>BE: GET /api/oauth/google
+    BE->>G: 302 redirect (client_id, scope, redirect_uri, state)
+    G->>U: Consent screen
+    U->>G: Approve
+    G->>BE: 302 callback ?code=AUTH_CODE&state=xyz
+    BE->>G: POST /token (code + client_secret) [back-channel]
+    G->>BE: access_token + id_token (JWT)
+    BE->>G: Fetch profile (email, name, sub)
+    BE->>BE: Find/create User by googleId
+    BE->>FE: Issue app JWT + set refresh httpOnly cookie
+    FE->>U: Logged in
